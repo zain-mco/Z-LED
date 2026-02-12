@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
+  },
+  serverExternalPackages: ['bcryptjs'],
 };
 
 export default nextConfig;

@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String          @id @default(cuid())
+  email     String          @unique
+  password  String
+  name      String
+  role      String          @default("user")
+  pdfs      Pdf[]
+  settings  ScreenSettings?
+  createdAt DateTime        @default(now())
+}
+
+model Pdf {
+  id        String   @id @default(cuid())
+  filename  String
+  filepath  String
+  sortOrder Int      @default(0)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model ScreenSettings {
+  id           String @id @default(cuid())
+  pageDuration Int    @default(60)
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
