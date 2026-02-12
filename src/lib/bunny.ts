@@ -24,7 +24,7 @@ export async function uploadToBunny(buffer: Buffer, remotePath: string): Promise
             AccessKey: STORAGE_PASSWORD,
             'Content-Type': 'application/octet-stream',
         },
-        body: buffer,
+        body: new Uint8Array(buffer),
     });
 
     if (!response.ok) {
