@@ -143,23 +143,35 @@ export default function AdminScreenPage() {
                 }
 
                 try {
-                    // 1. Get signed upload URL
+                    // 1. Get signed credentials
                     const signRes = await fetch('/api/admin/uploads/sign', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ filename: file.name, userId: screenId }),
                     });
 
-                    if (!signRes.ok) throw new Error('Failed to get upload URL');
-                    const { uploadUrl, remotePath } = await signRes.json();
+                    if (!signRes.ok) throw new Error('Failed to get upload credentials');
+                    const { remotePath, accessKey, storageHost, storageZone, storagePath } = await signRes.json();
 
-                    // 2. Upload to Proxy
+                    // 2. Upload DIRECTLY to BunnyCDN
+                    // Note: This requires BunnyCDN to accept PUT from this origin (CORS).
+                    // If CORS fails, we might need a different approach, but direct is the only way to bypass Vercel 4.5MB limit.
+                    const uploadUrl = `https://${storageHost}/${storageZone}${storagePath}/${remotePath}`;
+
                     const uploadRes = await fetch(uploadUrl, {
                         method: 'PUT',
+                        headers: {
+                            'AccessKey': accessKey,
+                            'Content-Type': 'application/octet-stream',
+                        },
                         body: file,
                     });
 
-                    if (!uploadRes.ok) throw new Error('Failed to upload file');
+                    if (!uploadRes.ok) {
+                        const errText = await uploadRes.text();
+                        console.error('BunnyCDN Error:', errText);
+                        throw new Error(`Failed to upload to CDN: ${uploadRes.status}`);
+                    }
 
                     // 3. Save metadata
                     const saveRes = await fetch(`/api/admin/screens/${screenId}/pdfs`, {
@@ -182,7 +194,7 @@ export default function AdminScreenPage() {
                 fetchPdfs();
             }
             if (failCount > 0) {
-                showToast(`${failCount} file(s) failed to upload`, 'error');
+                showToast(`${failCount} file(s) failed`, 'error');
             }
         } catch {
             showToast('Upload process failed', 'error');

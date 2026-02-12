@@ -20,13 +20,17 @@ export async function POST(req: NextRequest) {
     const uniqueName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
     const remotePath = `${userId}/${uniqueName}`;
 
-    // We return the path. The middleware will accept this path and proxy the content to BunnyCDN.
-    // In a more secure setup, we might sign this or store a temporary token, 
-    // but for this implementation we rely on the admin session for the *initial* request 
-    // and the middleware will allow the proxy.
+    // For admin users, we provide the direct upload credentials to bypass Vercel limits
+    const storageZone = process.env.BUNNY_STORAGE_ZONE || 'mco-cdn';
+    const storageHost = process.env.BUNNY_STORAGE_HOST || 'sg.storage.bunnycdn.com';
+    const storagePath = process.env.BUNNY_STORAGE_PATH || '/LED';
+    const accessKey = process.env.BUNNY_STORAGE_PASSWORD;
 
     return NextResponse.json({
         remotePath,
-        uploadUrl: `/api/upload-proxy?path=${encodeURIComponent(remotePath)}`
+        accessKey,
+        storageHost,
+        storageZone,
+        storagePath
     });
 }
