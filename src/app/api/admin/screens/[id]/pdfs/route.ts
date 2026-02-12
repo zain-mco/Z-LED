@@ -42,50 +42,85 @@ export async function POST(
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const formData = await req.formData();
-    const files = formData.getAll('files') as File[];
+    // Determine if this is a direct upload (FormData) or metadata save (JSON)
+    const contentType = req.headers.get('content-type') || '';
 
-    if (!files || files.length === 0) {
-        return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
-    }
+    if (contentType.includes('application/json')) {
+        // Handle metadata save for pre-uploaded file
+        const { filename, remotePath } = await req.json();
 
-    const maxOrder = await prisma.pdf.findFirst({
-        where: { userId: id },
-        orderBy: { sortOrder: 'desc' },
-        select: { sortOrder: true },
-    });
-
-    let currentOrder = (maxOrder?.sortOrder ?? -1) + 1;
-    const createdPdfs = [];
-
-    for (const file of files) {
-        if (file.type !== 'application/pdf') continue;
-
-        const uniqueName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const remotePath = `${id}/${uniqueName}`;
-        const buffer = Buffer.from(await file.arrayBuffer());
-
-        try {
-            const cdnUrl = await uploadToBunny(buffer, remotePath);
-
-            const pdf = await prisma.pdf.create({
-                data: {
-                    filename: file.name,
-                    filepath: cdnUrl,
-                    sortOrder: currentOrder++,
-                    userId: id,
-                },
-            });
-
-            createdPdfs.push(pdf);
-        } catch (err) {
-            console.error(`Failed to upload ${file.name}:`, err);
+        if (!filename || !remotePath) {
+            return NextResponse.json({ error: 'Missing metadata' }, { status: 400 });
         }
-    }
 
-    if (createdPdfs.length === 0) {
-        return NextResponse.json({ error: 'Failed to upload files' }, { status: 500 });
-    }
+        const maxOrder = await prisma.pdf.findFirst({
+            where: { userId: id },
+            orderBy: { sortOrder: 'desc' },
+            select: { sortOrder: true },
+        });
 
-    return NextResponse.json(createdPdfs, { status: 201 });
+        const currentOrder = (maxOrder?.sortOrder ?? -1) + 1;
+        const cdnUrl = process.env.BUNNY_CDN_URL
+            ? `${process.env.BUNNY_CDN_URL}${process.env.BUNNY_STORAGE_PATH}/${remotePath}`
+            : `https://mco-cdn.b-cdn.net/LED/${remotePath}`;
+
+        const pdf = await prisma.pdf.create({
+            data: {
+                filename,
+                filepath: cdnUrl,
+                sortOrder: currentOrder,
+                userId: id,
+            },
+        });
+
+        return NextResponse.json([pdf], { status: 201 });
+    } else {
+        // Handle legacy/small file direct upload check
+        const formData = await req.formData();
+        const files = formData.getAll('files') as File[];
+
+        if (!files || files.length === 0) {
+            return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
+        }
+
+        const maxOrder = await prisma.pdf.findFirst({
+            where: { userId: id },
+            orderBy: { sortOrder: 'desc' },
+            select: { sortOrder: true },
+        });
+
+        let currentOrder = (maxOrder?.sortOrder ?? -1) + 1;
+        const createdPdfs = [];
+
+        for (const file of files) {
+            if (file.type !== 'application/pdf') continue;
+
+            const uniqueName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            const remotePath = `${id}/${uniqueName}`;
+            const buffer = Buffer.from(await file.arrayBuffer());
+
+            try {
+                const cdnUrl = await uploadToBunny(buffer, remotePath);
+
+                const pdf = await prisma.pdf.create({
+                    data: {
+                        filename: file.name,
+                        filepath: cdnUrl,
+                        sortOrder: currentOrder++,
+                        userId: id,
+                    },
+                });
+
+                createdPdfs.push(pdf);
+            } catch (err) {
+                console.error(`Failed to upload ${file.name}:`, err);
+            }
+        }
+
+        if (createdPdfs.length === 0) {
+            return NextResponse.json({ error: 'Failed to upload files' }, { status: 500 });
+        }
+
+        return NextResponse.json(createdPdfs, { status: 201 });
+    }
 }

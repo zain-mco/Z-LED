@@ -132,24 +132,60 @@ export default function AdminScreenPage() {
         if (!files || files.length === 0) return;
 
         setUploading(true);
-        const formData = new FormData();
-        Array.from(files).forEach((f) => formData.append('files', f));
+        let successCount = 0;
+        let failCount = 0;
 
         try {
-            const res = await fetch(`/api/admin/screens/${screenId}/pdfs`, {
-                method: 'POST',
-                body: formData,
-            });
+            for (const file of Array.from(files)) {
+                if (file.type !== 'application/pdf') {
+                    showToast(`Skipped ${file.name} (not a PDF)`, 'error');
+                    continue;
+                }
 
-            if (res.ok) {
-                showToast(`${files.length} file(s) uploaded successfully`);
+                try {
+                    // 1. Get signed upload URL
+                    const signRes = await fetch('/api/admin/uploads/sign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: file.name, userId: screenId }),
+                    });
+
+                    if (!signRes.ok) throw new Error('Failed to get upload URL');
+                    const { uploadUrl, remotePath } = await signRes.json();
+
+                    // 2. Upload to Proxy
+                    const uploadRes = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        body: file,
+                    });
+
+                    if (!uploadRes.ok) throw new Error('Failed to upload file');
+
+                    // 3. Save metadata
+                    const saveRes = await fetch(`/api/admin/screens/${screenId}/pdfs`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename: file.name, remotePath }),
+                    });
+
+                    if (!saveRes.ok) throw new Error('Failed to save metadata');
+
+                    successCount++;
+                } catch (err) {
+                    console.error(err);
+                    failCount++;
+                }
+            }
+
+            if (successCount > 0) {
+                showToast(`${successCount} file(s) uploaded successfully`);
                 fetchPdfs();
-            } else {
-                const data = await res.json();
-                showToast(data.error || 'Upload failed', 'error');
+            }
+            if (failCount > 0) {
+                showToast(`${failCount} file(s) failed to upload`, 'error');
             }
         } catch {
-            showToast('Upload failed', 'error');
+            showToast('Upload process failed', 'error');
         } finally {
             setUploading(false);
         }

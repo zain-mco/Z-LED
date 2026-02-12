@@ -13,9 +13,7 @@
   --text-muted: #5555777;
   --accent-primary: #6c5ce7;
   --accent-secondary: #a29bfe;
-  --accent-gradient: linear-gradient(135deg, #6c5ce7
-
-, #00cec9, #0984e3);
+  --accent-gradient: linear-gradient(135deg, #6c5ce7, #00cec9, #0984e3);
   --accent-gradient-2: linear-gradient(135deg, #6c5ce7, #e17055);
   --danger: #ff6b6b;
   --danger-hover: #ee5a5a;
@@ -38,7 +36,8 @@
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -51,13 +50,16 @@ html, body {
 ::-webkit-scrollbar {
   width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-secondary);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
 }
@@ -81,14 +83,24 @@ html, body {
   width: 200%;
   height: 200%;
   background: radial-gradient(ellipse at 30% 20%, rgba(108, 92, 231, 0.08) 0%, transparent 50%),
-              radial-gradient(ellipse at 70% 80%, rgba(0, 206, 201, 0.06) 0%, transparent 50%);
+    radial-gradient(ellipse at 70% 80%, rgba(0, 206, 201, 0.06) 0%, transparent 50%);
   animation: bgFloat 20s ease-in-out infinite;
 }
 
 @keyframes bgFloat {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  33% { transform: translate(2%, -2%) rotate(1deg); }
-  66% { transform: translate(-1%, 1%) rotate(-1deg); }
+
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  33% {
+    transform: translate(2%, -2%) rotate(1deg);
+  }
+
+  66% {
+    transform: translate(-1%, 1%) rotate(-1deg);
+  }
 }
 
 .login-card {
@@ -340,7 +352,8 @@ html, body {
   transition: var(--transition);
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover,
+.nav-link.active {
   color: var(--text-primary);
   background: var(--bg-card);
 }
@@ -464,46 +477,129 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: rgba(26, 26, 46, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-xl);
-  padding: 32px;
-  width: 460px;
+  padding: 40px;
+  width: 500px;
   max-width: 90vw;
-  box-shadow: var(--shadow-lg);
-  animation: slideUp 0.3s ease;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
-.modal h3 {
-  font-size: 1.2rem;
+.modal h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 32px;
+}
+
+.modal .form-group {
   margin-bottom: 24px;
+}
+
+.modal .form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  display: block;
+  letter-spacing: 0.02em;
+}
+
+.input-field {
+  width: 100%;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: var(--transition);
+  outline: none;
+}
+
+.input-field:focus {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(108, 92, 231, 0.1);
+}
+
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-actions .btn {
+  min-width: 100px;
 }
 
 /* ======= PDF UPLOAD ZONE ======= */
@@ -517,7 +613,8 @@ html, body {
   background: rgba(108, 92, 231, 0.02);
 }
 
-.upload-zone:hover, .upload-zone.dragging {
+.upload-zone:hover,
+.upload-zone.dragging {
   border-color: var(--accent-primary);
   background: rgba(108, 92, 231, 0.06);
 }
@@ -633,9 +730,11 @@ html, body {
   .settings-grid {
     grid-template-columns: 1fr;
   }
+
   .dashboard-content {
     padding: 16px;
   }
+
   .dashboard-header {
     padding: 12px 16px;
   }
@@ -790,13 +889,13 @@ html, body {
   pointer-events: none;
 }
 
-.player-touch-zone-left:hover ~ .player-nav-indicator.left,
-.player-touch-zone-left:active ~ .player-nav-indicator.left {
+.player-touch-zone-left:hover~.player-nav-indicator.left,
+.player-touch-zone-left:active~.player-nav-indicator.left {
   color: rgba(255, 255, 255, 0.4);
 }
 
-.player-touch-zone-right:hover ~ .player-nav-indicator.right,
-.player-touch-zone-right:active ~ .player-nav-indicator.right {
+.player-touch-zone-right:hover~.player-nav-indicator.right,
+.player-touch-zone-right:active~.player-nav-indicator.right {
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -830,7 +929,9 @@ html, body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .player-loading p {
@@ -905,8 +1006,15 @@ html, body {
 }
 
 @keyframes toastSlide {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .toast-success {
